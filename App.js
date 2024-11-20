@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView } from 'react-native';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000'; 
+const API_URL = 'http://localhost:3000/api'; 
 
 axios.defaults.withCredentials = true;
 
@@ -52,66 +52,48 @@ const LoginScreen = ({ navigation }) => {
   );
 };
 
+
+// In your DormsScreen component
 const DormsScreen = ({ navigation }) => {
   const [dorms, setDorms] = useState([]);
-  const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
+    const fetchDorms = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/dorms`);
+        console.log('Dorms data:', response.data);
+        setDorms(response.data);
+      } catch (error) {
+        console.error('Failed to fetch dorms:', error);
+      }
+    };
+
     fetchDorms();
-    fetchUserInfo();
   }, []);
 
-  const fetchDorms = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/dorms`);
-      setDorms(response.data);
-    } catch (error) {
-      console.error('Failed to fetch dorms:', error);
-      if (error.response && error.response.status === 401) {
-        navigation.navigate('Login');
-      }
-    }
-  };
+  const handleDormPress = (dorm) => {
+    console.log('Selected dorm:', dorm);
+    // Extract the ObjectId string from the _id object
+    const dormId = dorm._id.$oid || dorm._id;
+    console.log('Extracted dorm ID:', dormId);
 
-  const fetchUserInfo = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/user`);
-      setUserInfo(response.data.user);
-    } catch (error) {
-      console.error('Failed to fetch user info:', error);
-    }
-  };
-
-  const handleUnassign = async () => {
-    try {
-      await axios.post(`${API_URL}/rooms/unassign`);
-      alert('Successfully unassigned from the room');
-      fetchUserInfo();
-    } catch (error) {
-      console.error('Failed to unassign:', error);
-      alert('Failed to unassign. Please try again.');
-    }
+    navigation.navigate('Rooms', {
+      dormId: dormId,
+      dormName: dorm.name
+    });
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>Dorms</Text>
-        {userInfo && userInfo.assignedRoom && (
-          <View style={styles.infoBox}>
-            <Text style={styles.infoText}>You are currently assigned to {userInfo.assignedRoom}</Text>
-            <TouchableOpacity style={styles.button} onPress={handleUnassign}>
-              <Text style={styles.buttonText}>Unassign from current room</Text>
-            </TouchableOpacity>
-          </View>
-        )}
         <FlatList
           data={dorms}
-          keyExtractor={(item) => item._id}
+          keyExtractor={(item) => item._id.$oid || item._id}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.listItem}
-              onPress={() => navigation.navigate('Rooms', { dormId: item._id, dormName: item.name })}
+              onPress={() => handleDormPress(item)}
             >
               <Text style={styles.listItemText}>{item.name}</Text>
             </TouchableOpacity>
@@ -121,39 +103,47 @@ const DormsScreen = ({ navigation }) => {
     </SafeAreaView>
   );
 };
-
 const RoomsScreen = ({ route, navigation }) => {
   const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(false);
   const { dormId, dormName } = route.params;
-
-  useEffect(() => {
-    fetchRooms();
-  }, []);
 
   const fetchRooms = async () => {
     try {
+      console.log('Fetching rooms for dorm ID:', dormId);
       const response = await axios.get(`${API_URL}/dorms/${dormId}/rooms`);
+      console.log('Rooms response:', response.data);
       setRooms(response.data);
     } catch (error) {
-      console.error('Failed to fetch rooms:', error);
-      if (error.response && error.response.status === 401) {
-        navigation.navigate('Login');
-      }
+      console.error('Failed to fetch rooms:', error.response?.data);
+      alert(error.response?.data?.error || 'Failed to fetch rooms');
     }
   };
 
-  const assignRoom = async (roomId) => {
+  useEffect(() => {
+    if (dormId) {
+      fetchRooms();
+    }
+  }, [dormId]);
+
+  const handleRoomAssignment = async (roomId) => {
     try {
-      await axios.post(`${API_URL}/rooms/${roomId}/assign`);
-      alert('Room assigned successfully!');
-      navigation.navigate('Dorms');
+      setLoading(true);
+      const actualRoomId = roomId.$oid || roomId;
+      console.log('Assigning room:', actualRoomId);
+      
+      const response = await axios.post(`${API_URL}/rooms/${actualRoomId}/assign`);
+      console.log('Assignment response:', response.data);
+      
+      // Refresh the rooms list to show updated assignments
+      await fetchRooms();
+      
+      alert(response.data.message || 'Successfully assigned to room');
     } catch (error) {
-      console.error('Failed to assign room:', error);
-      if (error.response && error.response.status === 401) {
-        navigation.navigate('Login');
-      } else {
-        alert('Failed to assign room. Please try again.');
-      }
+      console.error('Failed to assign room:', error.response?.data || error);
+      alert(error.response?.data?.error || 'Failed to assign room');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -163,21 +153,35 @@ const RoomsScreen = ({ route, navigation }) => {
         <Text style={styles.title}>{dormName} Rooms</Text>
         <FlatList
           data={rooms}
-          keyExtractor={(item) => item._id}
+          keyExtractor={(item) => item._id.$oid || item._id}
           renderItem={({ item }) => (
             <View style={styles.roomItem}>
               <Text style={styles.roomNumber}>Room {item.number}</Text>
-              <Text style={styles.roomCapacity}>Capacity: {item.currentStudents.length}/{item.capacity}</Text>
-              <Text style={styles.roomOccupants}>Occupants:</Text>
-              {item.currentStudents.map((student, index) => (
-                <Text key={index} style={styles.occupantName}>{student.name}</Text>
-              ))}
+              <Text style={styles.roomCapacity}>
+                Capacity: {item.current_students?.length || 0}/{item.capacity}
+              </Text>
+              {item.current_students?.length > 0 && (
+                <View style={styles.occupantsList}>
+                  <Text style={styles.occupantsTitle}>Current Occupants:</Text>
+                  {item.current_students.map((student, index) => (
+                    <Text key={index} style={styles.occupantName}>
+                      • {student.name}
+                    </Text>
+                  ))}
+                </View>
+              )}
               <TouchableOpacity
-                style={[styles.button, item.currentStudents.length >= item.capacity && styles.disabledButton]}
-                onPress={() => assignRoom(item._id)}
-                disabled={item.currentStudents.length >= item.capacity}
+                style={[
+                  styles.button,
+                  (item.current_students?.length >= item.capacity) && styles.disabledButton,
+                  loading && styles.loadingButton
+                ]}
+                onPress={() => handleRoomAssignment(item._id)}
+                disabled={item.current_students?.length >= item.capacity || loading}
               >
-                <Text style={styles.buttonText}>Assign Me</Text>
+                <Text style={styles.buttonText}>
+                  {loading ? 'Assigning...' : 'Assign Me'}
+                </Text>
               </TouchableOpacity>
             </View>
           )}
@@ -185,6 +189,20 @@ const RoomsScreen = ({ route, navigation }) => {
       </View>
     </SafeAreaView>
   );
+};
+
+
+
+// Function to handle room assignment
+const handleRoomAssignment = async (roomId) => {
+  try {
+    await axios.post(`${API_URL}/rooms/${roomId}/assign`);
+    alert('Successfully assigned to room');
+    // You might want to refresh the rooms data here
+  } catch (error) {
+    console.error('Failed to assign room:', error);
+    alert('Failed to assign room');
+  }
 };
 
 const App = () => {

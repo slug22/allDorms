@@ -1,0 +1,13 @@
+[package]
+name = "dorm-management-backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4.3"
+actix-cors = "0.6"
+mongodb = "2.6"
+futures = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.28", features = ["full"] }
+env_logger = "0.10"
