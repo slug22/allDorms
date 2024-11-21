@@ -151,77 +151,56 @@ async fn get_rooms(db: web::Data<Database>, dorm_id: web::Path<String>) -> impl 
     }
 }
 
-//Also update the test data initialization to ensure proper ID handling
-async fn initialize_test_data(db: &Database) {
-    println!("Initializing test data...");
+// Also update the test data initialization to ensure proper ID handling
+// async fn initialize_test_data(db: &Database) {
+//     println!("Initializing test data...");
 
-  match users_collection.find_one(doc! { "email": "1" }, None).await {
-    Ok(Some(_)) => {
-        println!("Test user already exists, skipping creation");
-    },
-    Ok(None) => {
-        // Create test user since it doesn't exist
-        let test_user = User {
-            id: None,
-            email: "1".to_string(),
-            password: "1".to_string(),
-            assigned_room: None,
-        };
-
-        match users_collection.insert_one(test_user, None).await {
-            Ok(_) => println!("Created test user successfully"),
-            Err(e) => println!("Error creating test user: {:?}", e),
-        }
-    },
-    Err(e) => println!("Error checking for existing test user: {:?}", e),
-}
-
-    // Create test dorm
-    let dorms_collection = db.collection("dorms");
-    let test_dorm = doc! {
-        "name": "Test Dorm"
-    };
+//     // Create test dorm
+//     let dorms_collection = db.collection("dorms");
+//     let test_dorm = doc! {
+//         "name": "Test Dorm"
+//     };
     
-    let dorm_result = match dorms_collection
-        .insert_one(test_dorm, None)
-        .await {
-            Ok(result) => {
-                println!("Created test dorm");
-                result
-            },
-            Err(e) => {
-                println!("Error creating test dorm: {:?}", e);
-                return;
-            }
-        };
+//     let dorm_result = match dorms_collection
+//         .insert_one(test_dorm, None)
+//         .await {
+//             Ok(result) => {
+//                 println!("Created test dorm");
+//                 result
+//             },
+//             Err(e) => {
+//                 println!("Error creating test dorm: {:?}", e);
+//                 return;
+//             }
+//         };
 
-    let dorm_id = match dorm_result.inserted_id.as_object_id() {
-        Some(id) => {
-            println!("Test dorm ID: {}", id);
-            id
-        },
-        None => {
-            println!("Failed to get dorm ID");
-            return;
-        }
-    };
+//     let dorm_id = match dorm_result.inserted_id.as_object_id() {
+//         Some(id) => {
+//             println!("Test dorm ID: {}", id);
+//             id
+//         },
+//         None => {
+//             println!("Failed to get dorm ID");
+//             return;
+//         }
+//     };
 
-    // Create test rooms
-    let rooms_collection = db.collection("rooms");
-    for i in 1..=5 {
-        let test_room = doc! {
-            "dorm_id": dorm_id,
-            "number": format!("10{}", i),
-            "capacity": 4,
-            "current_students": []
-        };
+//     // Create test rooms
+//     let rooms_collection = db.collection("rooms");
+//     for i in 1..=5 {
+//         let test_room = doc! {
+//             "dorm_id": dorm_id,
+//             "number": format!("10{}", i),
+//             "capacity": 4,
+//             "current_students": []
+//         };
         
-        match rooms_collection.insert_one(test_room, None).await {
-            Ok(_) => println!("Created room {}", i),
-            Err(e) => println!("Error creating room {}: {:?}", i, e),
-        }
-    }
-}
+//         match rooms_collection.insert_one(test_room, None).await {
+//             Ok(_) => println!("Created room {}", i),
+//             Err(e) => println!("Error creating room {}: {:?}", i, e),
+//         }
+//     }
+// }
 #[get("/user")]
 async fn get_user(db: web::Data<Database>) -> impl Responder {
     println!("Fetching user info");
@@ -745,6 +724,111 @@ async fn initialize_test_school(db: &Database) -> Result<ObjectId, Box<dyn Error
         },
     }
 }
+// Add this new struct at the top with your other structs
+#[derive(Debug, Deserialize)]
+struct RoomImportRequest {
+    dorm_id: String,
+    room_data: serde_json::Value,  // Raw JSON data
+}
+
+#[derive(Debug, Deserialize)]
+struct StudentData {
+    name: String,
+    id: i32,
+}
+
+// Add this new route handler
+#[post("/admin/import-rooms")]
+async fn import_rooms(
+    req: web::Json<RoomImportRequest>,
+    db: web::Data<Database>,
+) -> impl Responder {
+    let rooms_collection = db.collection::<Room>("rooms");
+    let users_collection = db.collection::<User>("users");
+    
+    // Parse the dorm_id
+    let dorm_id = match ObjectId::parse_str(&req.dorm_id) {
+        Ok(oid) => oid,
+        Err(_) => return HttpResponse::BadRequest().json(doc! {
+            "error": "Invalid dorm ID format"
+        }),
+    };
+
+    // Parse the room_data JSON
+    let room_data: std::collections::HashMap<String, Vec<StudentData>> = 
+        match serde_json::from_value(req.room_data.clone()) {
+            Ok(data) => data,
+            Err(e) => return HttpResponse::BadRequest().json(doc! {
+                "error": format!("Invalid JSON format: {}", e)
+            }),
+        };
+
+    let mut created_rooms = 0;
+    let mut created_students = 0;
+
+    for (room_number, students) in room_data {
+        // Create the room
+        let new_room = Room {
+            id: None,
+            dorm_id,
+            number: room_number.clone(),
+            capacity: students.len() as i32,
+            current_students: vec![],  // Will be populated after creating students
+        };
+
+        let room_result = match rooms_collection.insert_one(new_room, None).await {
+            Ok(result) => result,
+            Err(e) => {
+                println!("Failed to create room {}: {:?}", room_number, e);
+                continue;
+            }
+        };
+
+        created_rooms += 1;
+
+        // Create students and add them to the room
+        let mut room_students = Vec::new();
+        for student in students {
+            // Create user account for the student
+            let student_email = format!("student{}@example.com", student.id);
+            let new_user = User {
+                id: None,
+                email: student_email.clone(),
+                password: format!("pass{}", student.id),  // Simple password generation
+                assigned_room: Some(room_number.clone()),
+            };
+
+            match users_collection.insert_one(new_user, None).await {
+                Ok(_) => {
+                    created_students += 1;
+                    room_students.push(Student {
+                        id: None,
+                        name: student_email,
+                    });
+                }
+                Err(e) => println!("Failed to create student {}: {:?}", student.id, e),
+            }
+        }
+
+        // Update room with student list
+        let student_bson = to_bson(&room_students).expect("Failed to serialize students");
+        let _ = rooms_collection
+            .update_one(
+                doc! { "_id": room_result.inserted_id },
+                doc! { "$set": { "current_students": student_bson } },
+                None,
+            )
+            .await;
+    }
+
+    HttpResponse::Ok().json(doc! {
+        "message": "Import completed successfully",
+        "rooms_created": created_rooms,
+        "students_created": created_students,
+    })
+}
+
+// Add the new route to your main function's App builder
 
 // Update your main function to initialize the test school
 #[actix_web::main]
@@ -764,7 +848,7 @@ async fn main() -> std::io::Result<()> {
     );
 
     // Initialize test data and school
-    initialize_test_data(&db).await;
+    //initialize_test_data(&db).await;
     match initialize_test_school(&db).await {
         Ok(school_id) => println!("Test school ID: {}", school_id),
         Err(e) => println!("Error initializing test school: {:?}", e),
@@ -797,7 +881,8 @@ async fn main() -> std::io::Result<()> {
                     .service(admin_login)
                     .service(create_dorm)
                     .service(create_room)
-                    .service(create_student),
+                    .service(create_student)
+                    .service(import_rooms),
             )
     })
     .bind("127.0.0.1:3000")?

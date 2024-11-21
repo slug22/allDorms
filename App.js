@@ -9,132 +9,13 @@ const API_URL = 'http://localhost:3000/api';
 axios.defaults.withCredentials = true;
 
 const Stack = createStackNavigator();
-// Define styles first
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#000',
-  },
-  input: {
-    height: 50,
-    borderColor: '#e0e0e0',
-    borderWidth: 1,
-    borderRadius: 10,
-    marginBottom: 15,
-    paddingHorizontal: 15,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  buttonDisabled: {
-    backgroundColor: '#cccccc',
-  },
-  disabledButton: {
-    backgroundColor: '#A0A0A0',
-  },
-  loadingButton: {
-    opacity: 0.7,
-  },
-  section: {
-    marginBottom: 30,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    paddingBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-  },
-  picker: {
-    height: 50,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 10,
-  },
-  listItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  listItemText: {
-    fontSize: 18,
-  },
-  roomItem: {
-    backgroundColor: '#f8f8f8',
-    padding: 15,
-    marginBottom: 15,
-    borderRadius: 10,
-  },
-  roomNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  roomCapacity: {
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  occupantsList: {
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  occupantsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  occupantName: {
-    fontSize: 14,
-    marginLeft: 10,
-    marginBottom: 2,
-  },
-  welcomeTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 40,
-    color: '#000',
-    textAlign: 'center',
-  },
-  loginButton: {
-    backgroundColor: '#007AFF',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 20,
-    width: '100%',
-  },
-  adminButton: {
-    backgroundColor: '#34C759',
-  },
-});
+
 
 // Add this new component for the selection screen
 const SelectLoginScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView style={styles.content}>
         <Text style={styles.title}>Welcome</Text>
         <TouchableOpacity 
           style={[styles.button, { marginBottom: 20 }]} 
@@ -148,7 +29,7 @@ const SelectLoginScreen = ({ navigation }) => {
         >
           <Text style={styles.buttonText}>Admin Login</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -171,7 +52,7 @@ const StudentLoginScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView style={styles.content}>
         <Text style={styles.title}>Student Login</Text>
         <TextInput
           style={styles.input}
@@ -191,7 +72,7 @@ const StudentLoginScreen = ({ navigation }) => {
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -229,7 +110,7 @@ const DormsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView style={styles.content}>
         <Text style={styles.title}>Dorms</Text>
         <FlatList
           data={dorms}
@@ -243,7 +124,7 @@ const DormsScreen = ({ navigation }) => {
             </TouchableOpacity>
           )}
         />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -293,26 +174,26 @@ const RoomsScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView style={styles.content}>
         <Text style={styles.title}>{dormName} Rooms</Text>
         <FlatList
           data={rooms}
           keyExtractor={(item) => item._id.$oid || item._id}
           renderItem={({ item }) => (
-            <View style={styles.roomItem}>
+            <ScrollView style={styles.roomItem}>
               <Text style={styles.roomNumber}>Room {item.number}</Text>
               <Text style={styles.roomCapacity}>
                 Capacity: {item.current_students?.length || 0}/{item.capacity}
               </Text>
               {item.current_students?.length > 0 && (
-                <View style={styles.occupantsList}>
+                <ScrollView style={styles.occupantsList}>
                   <Text style={styles.occupantsTitle}>Current Occupants:</Text>
                   {item.current_students.map((student, index) => (
                     <Text key={index} style={styles.occupantName}>
                       • {student.name}
                     </Text>
                   ))}
-                </View>
+                </ScrollView>
               )}
               <TouchableOpacity
                 style={[
@@ -327,10 +208,10 @@ const RoomsScreen = ({ route, navigation }) => {
                   {loading ? 'Assigning...' : 'Assign Me'}
                 </Text>
               </TouchableOpacity>
-            </View>
+            </ScrollView>
           )}
         />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -378,7 +259,7 @@ const AdminLoginScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView style={styles.content}>
         <Text style={styles.title}>Admin Login</Text>
         <TextInput
           style={styles.input}
@@ -410,11 +291,10 @@ const AdminLoginScreen = ({ navigation }) => {
             {loading ? 'Logging in...' : 'Login as Admin'}
           </Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
-
 const AdminDashboardScreen = ({ route, navigation }) => {
   const { schoolId, schoolName } = route.params;
   const [dormName, setDormName] = useState('');
@@ -423,6 +303,8 @@ const AdminDashboardScreen = ({ route, navigation }) => {
   const [selectedDorm, setSelectedDorm] = useState(null);
   const [dorms, setDorms] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [jsonData, setJsonData] = useState('');
+  const [importLoading, setImportLoading] = useState(false);
 
   const createDorm = async () => {
     try {
@@ -484,71 +366,202 @@ const AdminDashboardScreen = ({ route, navigation }) => {
     }
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content}>
-        <Text style={styles.title}>{schoolName} Admin Dashboard</Text>
-        
-        {/* Create Dorm Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Create New Dorm</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Dorm Name"
-            value={dormName}
-            onChangeText={setDormName}
-          />
-          <TouchableOpacity 
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={createDorm}
-            disabled={loading || !dormName.trim()}
-          >
-            <Text style={styles.buttonText}>Create Dorm</Text>
-          </TouchableOpacity>
-        </View>
+  const handleImportRooms = async () => {
+    if (!selectedDorm || !jsonData) {
+      alert('Please select a dorm and provide JSON data');
+      return;
+    }
 
-        {/* Create Room Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Create New Room</Text>
-          <Picker
-            selectedValue={selectedDorm}
-            onValueChange={(itemValue) => setSelectedDorm(itemValue)}
-            style={styles.picker}
-          >
-            <Picker.Item label="Select a Dorm" value={null} />
-            {dorms.map(dorm => (
-              <Picker.Item 
-                key={dorm._id.$oid || dorm._id} 
-                label={dorm.name} 
-                value={dorm._id.$oid || dorm._id} 
+    try {
+      setImportLoading(true);
+      let parsedData;
+      try {
+        parsedData = JSON.parse(jsonData);
+      } catch (e) {
+        alert('Invalid JSON format');
+        return;
+      }
+
+      const response = await axios.post(`${API_URL}/admin/import-rooms`, {
+        dorm_id: selectedDorm,
+        room_data: parsedData
+      });
+
+      alert(`Import successful!\nCreated ${response.data.rooms_created} rooms\nCreated ${response.data.students_created} students`);
+      setJsonData('');
+      fetchDorms();
+    } catch (error) {
+      console.error('Failed to import rooms:', error.response?.data);
+      alert(error.response?.data?.error || 'Failed to import rooms');
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+    return (
+      
+        <ScrollView style={styles.mainContainer}>
+          <ScrollView style={styles.content}>
+            <Text style={styles.title}>{schoolName} Admin Dashboard</Text>
+            
+            {/* Create Dorm Section */}
+            <ScrollView style={styles.section}>
+              <Text style={styles.sectionTitle}>Create New Dorm</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Dorm Name"
+                value={dormName}
+                onChangeText={setDormName}
               />
-            ))}
-          </Picker>
-          <TextInput
-            style={styles.input}
-            placeholder="Room Number"
-            value={roomNumber}
-            onChangeText={setRoomNumber}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Capacity"
-            value={capacity}
-            onChangeText={setCapacity}
-            keyboardType="numeric"
-          />
-          <TouchableOpacity 
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={createRoom}
-            disabled={loading || !selectedDorm || !roomNumber.trim() || !capacity}
-          >
-            <Text style={styles.buttonText}>Create Room</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
+              <TouchableOpacity 
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={createDorm}
+                disabled={loading || !dormName.trim()}
+              >
+                <Text style={styles.buttonText}>Create Dorm</Text>
+              </TouchableOpacity>
+            </ScrollView>
+  
+            {/* Create Room Section */}
+            <ScrollView style={styles.section}>
+              <Text style={styles.sectionTitle}>Create New Room</Text>
+              <Picker
+                selectedValue={selectedDorm}
+                onValueChange={(itemValue) => setSelectedDorm(itemValue)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Select a Dorm" value={null} />
+                {dorms.map(dorm => (
+                  <Picker.Item 
+                    key={dorm._id.$oid || dorm._id} 
+                    label={dorm.name} 
+                    value={dorm._id.$oid || dorm._id} 
+                  />
+                ))}
+              </Picker>
+              <TextInput
+                style={styles.input}
+                placeholder="Room Number"
+                value={roomNumber}
+                onChangeText={setRoomNumber}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Capacity"
+                value={capacity}
+                onChangeText={setCapacity}
+                keyboardType="numeric"
+              />
+              <TouchableOpacity 
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={createRoom}
+                disabled={loading || !selectedDorm || !roomNumber.trim() || !capacity}
+              >
+                <Text style={styles.buttonText}>Create Room</Text>
+              </TouchableOpacity>
+            </ScrollView>
+  
+            {/* Import JSON Section */}
+            <ScrollView style={styles.section}>
+              <Text style={styles.sectionTitle}>Import Rooms and Students</Text>
+              <Picker
+                selectedValue={selectedDorm}
+                onValueChange={(itemValue) => setSelectedDorm(itemValue)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Select a Dorm" value={null} />
+                {dorms.map(dorm => (
+                  <Picker.Item 
+                    key={dorm._id.$oid || dorm._id} 
+                    label={dorm.name} 
+                    value={dorm._id.$oid || dorm._id} 
+                  />
+                ))}
+              </Picker>
+              <TextInput
+                style={[styles.input, { height: 150, textAlignVertical: 'top' }]}
+                placeholder="Paste JSON data here..."
+                value={jsonData}
+                onChangeText={setJsonData}
+                multiline={true}
+                numberOfLines={6}
+              />
+              <TouchableOpacity 
+                style={[styles.button, importLoading && styles.buttonDisabled]}
+                onPress={handleImportRooms}
+                disabled={importLoading || !selectedDorm || !jsonData.trim()}
+              >
+                <Text style={styles.buttonText}>
+                  {importLoading ? 'Importing...' : 'Import Rooms and Students'}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </ScrollView>
+        </ScrollView>
+
+    );
+  };
+  
+  const styles = StyleSheet.create({
+    mainContainer: {
+      flex: 1,
+      backgroundColor: '#fff',
+    },
+    content: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      marginBottom: 20,
+      color: '#000',
+    },
+    section: {
+      marginBottom: 30,
+      borderBottomWidth: 1,
+      borderBottomColor: '#e0e0e0',
+      paddingBottom: 20,
+    },
+    sectionTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginBottom: 15,
+    },
+    input: {
+      height: 50,
+      borderColor: '#e0e0e0',
+      borderWidth: 1,
+      borderRadius: 10,
+      marginBottom: 15,
+      paddingHorizontal: 15,
+      fontSize: 16,
+      backgroundColor: '#fff',
+    },
+    picker: {
+      height: 50,
+      marginBottom: 15,
+      borderWidth: 1,
+      borderColor: '#e0e0e0',
+      borderRadius: 10,
+    },
+    button: {
+      backgroundColor: '#007AFF',
+      padding: 15,
+      borderRadius: 10,
+      alignItems: 'center',
+      marginTop: 10,
+    },
+    buttonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    buttonDisabled: {
+      backgroundColor: '#cccccc',
+    },
+  });
+
 
 // CreateStudentScreen.js
 const CreateStudentScreen = ({ route, navigation }) => {
@@ -577,7 +590,7 @@ const CreateStudentScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView style={styles.content}>
         <Text style={styles.title}>Create New Student</Text>
         <TextInput
           style={styles.input}
@@ -603,7 +616,7 @@ const CreateStudentScreen = ({ route, navigation }) => {
             {loading ? 'Creating...' : 'Create Student'}
           </Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
