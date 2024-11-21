@@ -151,56 +151,56 @@ async fn get_rooms(db: web::Data<Database>, dorm_id: web::Path<String>) -> impl 
     }
 }
 
-// Also update the test data initialization to ensure proper ID handling
-// async fn initialize_test_data(db: &Database) {
-//     println!("Initializing test data...");
+Also update the test data initialization to ensure proper ID handling
+async fn initialize_test_data(db: &Database) {
+    println!("Initializing test data...");
 
-//     // Create test dorm
-//     let dorms_collection = db.collection("dorms");
-//     let test_dorm = doc! {
-//         "name": "Test Dorm"
-//     };
+    // Create test dorm
+    let dorms_collection = db.collection("dorms");
+    let test_dorm = doc! {
+        "name": "Test Dorm"
+    };
     
-//     let dorm_result = match dorms_collection
-//         .insert_one(test_dorm, None)
-//         .await {
-//             Ok(result) => {
-//                 println!("Created test dorm");
-//                 result
-//             },
-//             Err(e) => {
-//                 println!("Error creating test dorm: {:?}", e);
-//                 return;
-//             }
-//         };
+    let dorm_result = match dorms_collection
+        .insert_one(test_dorm, None)
+        .await {
+            Ok(result) => {
+                println!("Created test dorm");
+                result
+            },
+            Err(e) => {
+                println!("Error creating test dorm: {:?}", e);
+                return;
+            }
+        };
 
-//     let dorm_id = match dorm_result.inserted_id.as_object_id() {
-//         Some(id) => {
-//             println!("Test dorm ID: {}", id);
-//             id
-//         },
-//         None => {
-//             println!("Failed to get dorm ID");
-//             return;
-//         }
-//     };
+    let dorm_id = match dorm_result.inserted_id.as_object_id() {
+        Some(id) => {
+            println!("Test dorm ID: {}", id);
+            id
+        },
+        None => {
+            println!("Failed to get dorm ID");
+            return;
+        }
+    };
 
-//     // Create test rooms
-//     let rooms_collection = db.collection("rooms");
-//     for i in 1..=5 {
-//         let test_room = doc! {
-//             "dorm_id": dorm_id,
-//             "number": format!("10{}", i),
-//             "capacity": 4,
-//             "current_students": []
-//         };
+    // Create test rooms
+    let rooms_collection = db.collection("rooms");
+    for i in 1..=5 {
+        let test_room = doc! {
+            "dorm_id": dorm_id,
+            "number": format!("10{}", i),
+            "capacity": 4,
+            "current_students": []
+        };
         
-//         match rooms_collection.insert_one(test_room, None).await {
-//             Ok(_) => println!("Created room {}", i),
-//             Err(e) => println!("Error creating room {}: {:?}", i, e),
-//         }
-//     }
-// }
+        match rooms_collection.insert_one(test_room, None).await {
+            Ok(_) => println!("Created room {}", i),
+            Err(e) => println!("Error creating room {}: {:?}", i, e),
+        }
+    }
+}
 #[get("/user")]
 async fn get_user(db: web::Data<Database>) -> impl Responder {
     println!("Fetching user info");
@@ -743,7 +743,7 @@ async fn main() -> std::io::Result<()> {
     );
 
     // Initialize test data and school
-    //initialize_test_data(&db).await;
+    initialize_test_data(&db).await;
     match initialize_test_school(&db).await {
         Ok(school_id) => println!("Test school ID: {}", school_id),
         Err(e) => println!("Error initializing test school: {:?}", e),
