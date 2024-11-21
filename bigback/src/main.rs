@@ -151,9 +151,30 @@ async fn get_rooms(db: web::Data<Database>, dorm_id: web::Path<String>) -> impl 
     }
 }
 
-Also update the test data initialization to ensure proper ID handling
+//Also update the test data initialization to ensure proper ID handling
 async fn initialize_test_data(db: &Database) {
     println!("Initializing test data...");
+
+  match users_collection.find_one(doc! { "email": "1" }, None).await {
+    Ok(Some(_)) => {
+        println!("Test user already exists, skipping creation");
+    },
+    Ok(None) => {
+        // Create test user since it doesn't exist
+        let test_user = User {
+            id: None,
+            email: "1".to_string(),
+            password: "1".to_string(),
+            assigned_room: None,
+        };
+
+        match users_collection.insert_one(test_user, None).await {
+            Ok(_) => println!("Created test user successfully"),
+            Err(e) => println!("Error creating test user: {:?}", e),
+        }
+    },
+    Err(e) => println!("Error checking for existing test user: {:?}", e),
+}
 
     // Create test dorm
     let dorms_collection = db.collection("dorms");
